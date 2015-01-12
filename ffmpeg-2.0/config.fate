@@ -1,0 +1,1 @@
+config:arm:armv5t:armv5t:linux:gcc 4.3.3 (Sourcery G++ Lite 2009q1-203):--prefix=/home/eam/sips/rel --enable-cross-compile --arch=arm --target-os=linux --enable-static --disable-shared --cc=arm-none-linux-gnueabi-gcc --enable-libx264 --enable-gpl --disable-network --enable-pthreads --enable-small --disable-parsers --disable-debug

@@ -1,0 +1,7 @@
+export PATH=/usr/local/arm-2008q1/bin:$PATH
+HOSTTPL=arm-none-linux-gnueabi
+./configure --prefix=$HOME/sipvg --host=$HOSTTPL --enable-static --disable-shared
+
+make CC=arm-none-linux-gnueabi-gcc AR=arm-none-linux-gnueabi-ar LD=arm-none-linux-gnueabi-gcc RANLIB=arm-none-linux-gnueabi-ranlib STRIP=arm-none-linux-gnueabi-strip
+make install
+

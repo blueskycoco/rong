@@ -1,0 +1,7 @@
+export PATH=/usr/local/arm-2008q1/bin:$PATH
+PREFIX=$HOME/sipvg
+HOSTTPL=arm-none-linux-gnueabi
+INSTALLDIR=$HOME/sipvg
+./configure --prefix=$PREFIX --sysconfdir=/etc --host=$HOSTTPL --disable-abiflags --disable-antlrdebug
+make CC=arm-none-linux-gnueabi-gcc AR=arm-none-linux-gnueabi-ar LD=arm-none-linux-gnueabi-gcc RANLIB=arm-none-linux-gnueabi-ranlib STRIP=arm-none-linux-gnueabi-strip
+make install

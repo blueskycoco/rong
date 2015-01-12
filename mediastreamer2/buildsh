@@ -1,0 +1,18 @@
+PREFIX=$HOME/sipvg
+HOSTTPL=arm-none-linux-gnueabi
+INSTALLDIR=$HOME/sipvg
+
+./configure --prefix=$PREFIX --host=$HOSTTPL \
+--disable-static --enable-video=false --disable-video --disable-xv --enable-glx=no  --disable-x11 --disable-pulseaudio \
+--enable-ffmpeg \
+--with-gnu-ld --without-ortp \
+FFMPEG_CFLAGS="-I$INSTALLDIR/include" \
+FFMPEG_LIBS="-L$INSTALLDIR/lib -lavcodec" \
+SWSCALE_CFLAGS="-I$INSTALLDIR/include" \
+SWSCALE_LIBS="-L$INSTALLDIR/lib -lswscale" \
+SPEEX_CFLAGS="-I$INSTALLDIR/include" \
+SPEEX_LIBS="-L$INSTALLDIR/lib -lspeex -lspeexdsp"  \
+SPEEXDSP_CFLAGS="-I$INSTALLDIR/include" \
+SPEEXDSP_LIBS="-L$INSTALLDIR/lib -lspeex -lspeexdsp" \
+ORTP_CFLAGS="-I$INSTALLDIR/include" \
+ORTP_LIBS="-L$INSTALLDIR/lib -lortp"
