@@ -9,9 +9,9 @@ SOURCES = \
 	src/test_audio.c src/callbacks.c   src/channelsys.c \
 	src/SipVoiceService.c src/main.c
 INCLUDE =
-LIB = ../lib/libvg.a
+LIB = /home/rdp/sipvg/lib/libvg.a
 
-FLAG_COMPILE=-g -Wall -DUSE_BELLESIP -I./include -I../include -I../include/bellesip_sal
+FLAG_COMPILE=-g -Wall -DUSE_BELLESIP -I./include -I/home/rdp/sipvg/include -I/home/rdp/sipvg/include/bellesip_sal
 
 OBJS = $(SOURCES:.c=.o)
 LIB_OBJS = \
@@ -21,16 +21,16 @@ LIB_OBJS = \
 MAIN_OBJS = main.o
 
 RM = rm
-LDFLAGS=-L../lib -lortp -lmediastreamer_base -lmediastreamer_voip -lspeex -lspeexdsp -lbellesip -lantlr3c
+LDFLAGS=-L/home/rdp/sipvg/lib -lortp -lmediastreamer_base -lmediastreamer_voip -lspeex -lspeexdsp -lbellesip -lantlr3c -lasound
 
 all:$(LIB) $(TARGET)
 
 $(LIB):$(OBJS)
 	$(AR) -r $(LIB)  $(LIB_OBJS)
-	mkdir -p ../include/voicegw
-	cp -rf include/* ../include/voicegw
+	mkdir -p /home/rdp/sipvg/include/voicegw
+	cp -rf include/* /home/rdp/sipvg/include/voicegw
 $(TARGET):$(LIB) $(MAIN_OBJS)
-	$(CC) -o $@ $(MAIN_OBJS) $(FLAG_COMPILE) $(LDFLAGS) $(LIB) ../lib/libsal.a
+	$(CC) -o $@ $(MAIN_OBJS) $(FLAG_COMPILE) $(LDFLAGS) $(LIB) /home/rdp/sipvg/lib/libsal.a
 $(OBJS): %.o: %.c $(INCLUDE) 
 	mkdir -p objs/src
 	$(CC) -c $(FLAG_COMPILE) $< 
