@@ -36,12 +36,25 @@ void on_call_hang(sip_voice_service_t* s)
 		recording=0;
     }*/
     ms_warning("remote hang up\r\n");
+	if(ta)
+	{
+		test_audio_file_stop(ta);
+		test_audio_file_destroy(ta);
+		ta=NULL;
+	}
 }
 int on_call_in(sip_voice_service_t* s,char* caller)
 {
 	ms_warning("caller %s\r\b",caller);
-	if(strncmp("999",strchr(caller,':'),3)==0)
+	if(strncmp(":toto",strchr(caller,':'),5)==0)
+	{
 		accept_call(s,s->m_call);
+		if(ta==NULL){
+		ta=test_audio_file_new(s,NULL);
+		test_audio_file_new(s,NULL);
+		test_audio_file_start(ta);
+			}
+	}
 	return 0;
 }
 /*1 for 3g1 , 2 for 3g2 ,3 for pstn ,4 for voip*/
@@ -53,18 +66,20 @@ int connect_audio_path(audio_path_t* audio_path,int source, int dest,bool connec
 	//static MSTicker *ticker1,*ticker2;
 	//char *capt_card1=NULL,*play_card1=NULL,*capt_card2=NULL,*play_card2=NULL;
 	int rate = 8000;
-	char plughw_source[11],plughw_dest[11];
+	char plughw_source[17],plughw_dest[17],plughw[11];
 	if(connect)
 	{
-		memset(plughw_source,'\0',11);
-		memset(plughw_dest,'\0',11);
-		sprintf(plughw_source,"plughw:0,%d",source);
-		sprintf(plughw_dest,"plughw:0,%d",dest);
-		
+		memset(plughw_source,'\0',17);
+		memset(plughw,'\0',11);
+		memset(plughw_dest,'\0',17);
+		sprintf(plughw_source,"ALSA: plughw:0,%d",source);
+		sprintf(plughw_dest,"ALSA: plughw:0,%d",dest);
+		sprintf(plughw,"plughw:0,%d",source);
 		if(ms_snd_card_manager_get_card(ms_snd_card_manager_get(),plughw_source)==NULL)
-			ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(plughw_source,plughw_source));
+			ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(plughw,plughw));
+		sprintf(plughw,"plughw:0,%d",dest);
 		if(ms_snd_card_manager_get_card(ms_snd_card_manager_get(),plughw_dest)==NULL)
-			ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(plughw_dest,plughw_dest));
+			ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(plughw,plughw));
 
 		card_capture1 = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),plughw_source);
 		card_playback1 = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),plughw_source);

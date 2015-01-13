@@ -227,7 +227,6 @@
 
 /* defined if alsa support is available */
 #undef __ALSA_ENABLED__
-#define __ALSA_ENABLED__
 
 /* defined if arts support is available */
 #undef __ARTS_ENABLED__

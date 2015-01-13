@@ -13092,7 +13092,7 @@ if test "$perf" = "yes" ; then
 fi
 
 if test $GCC = yes && test $wall_werror = yes;  then
-	CFLAGS="$CFLAGS "
+	CFLAGS="$CFLAGS -Werror "
 fi
 
 # Check whether --enable-ssl-hmac was given.
