@@ -2,7 +2,8 @@
 #include "SipVoiceService.h"
 #include "test_audio.h"
 int g_debug=0;
-void on_sip_audio_data(void* ud,uint8_t* data,int len){
+void on_sip_audio_data(void* ud,uint8_t* data,int len)
+{
    if(g_debug)
    printf("received audio data len: %d\n",len);
 }
@@ -10,7 +11,8 @@ static test_audio_file_t* ta=NULL;
 static int file_idx=0;
 static int recording=0;
 
-void on_call_hang(sip_voice_service_t* s){
+void on_call_hang(sip_voice_service_t* s)
+{
    
     if(ta)
 	{
@@ -24,7 +26,8 @@ void on_call_hang(sip_voice_service_t* s){
 		recording=0;
     }
 }
-int on_call_in(sip_voice_service_t* s,char* caller){
+int on_call_in(sip_voice_service_t* s,char* caller)
+{
 	return 0;
 }
 

@@ -162,6 +162,7 @@ sip_voice_service_t* sip_voice_service_new(void* ud)
 	s->ud=ud;
 	//ortp ³õÊ¼»¯
 	ortp_init();
+	ortp_set_log_level_mask(ORTP_MESSAGE|ORTP_WARNING|ORTP_ERROR|ORTP_FATAL);
 	s->dyn_pt=96;
 	s->default_profile=rtp_profile_new("default profile");
 

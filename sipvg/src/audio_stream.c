@@ -1,7 +1,12 @@
 #include "audio_stream.h"
 #include "mediastreamer2/mscodecutils.h"
 #include "mediastreamer2/msrtp.h"
+#include "mediastreamer2/msfileplayer.h"
+#include "mediastreamer2/msfilter.h"
+#include "mediastreamer2/mssndcard.h"
 #include "mschannel.h"
+#define RECORD_TO_FILE 0
+#define CARD_D "plughw:0,1"
 
 static void disable_checksums(ortp_socket_t sock) {
 #if defined(DISABLE_CHECKSUMS) && defined(SO_NO_CHECK)
@@ -43,8 +48,20 @@ audio_stream_t* audio_stream_new(int loc_rtp_port, int loc_rtcp_port){
 	s->source=ms_filter_new((MSFilterId)MS_SOURCE_CHANNEL_ID);
 	s->output=ms_filter_new((MSFilterId)MS_OUTPUT_CHANNEL_ID);
 	s->tee=ms_filter_new(MS_TEE_ID);
+	#if RECORD_TO_FILE
 	s->record=ms_filter_new(MS_FILE_REC_ID);
-
+	#else
+	
+	MSSndCard *card_playback = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),CARD_D);
+	if(card_playback==NULL)
+	{
+		ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(CARD_D,CARD_D));
+		card_playback = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),CARD_D);
+	}
+	s->record=ms_snd_card_create_writer(card_playback);
+	int rate = 8000;
+	ms_filter_call_method (s->record, MS_FILTER_SET_SAMPLE_RATE,	&rate);
+	#endif
 	s->ticker=ms_ticker_new();
 	ms_ticker_set_name(s->ticker,"audio send ticker");
 
