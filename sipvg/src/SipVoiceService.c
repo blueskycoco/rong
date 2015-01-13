@@ -6,14 +6,16 @@
 //回调
 extern SalCallbacks sal_callbacks;
 //数据回调入口
-static void OnChannelDataNotify(channel_t* c,void* im){
+static void OnChannelDataNotify(channel_t* c,void* im)
+{
 	sip_voice_service_t* s=(sip_voice_service_t*)channel_get_user_data(c);
 	mblk_t* om=(mblk_t*)im;
 	if(s->cb)
 		s->cb(s->ud,om->b_rptr,om->b_wptr-om->b_rptr);
 }
 
-static int find_codec_rank(const char *mime, int clock_rate){
+static int find_codec_rank(const char *mime, int clock_rate)
+{
 	int i;
 
 #ifdef __arm__
@@ -28,7 +30,8 @@ static int find_codec_rank(const char *mime, int clock_rate){
 	}
 	return RANK_END;
 }
-static int codec_compare(const PayloadType *a, const PayloadType *b){
+static int codec_compare(const PayloadType *a, const PayloadType *b)
+{
 	int ra,rb;
 	ra=find_codec_rank(a->mime_type,a->clock_rate);
 	rb=find_codec_rank(b->mime_type,b->clock_rate);
@@ -36,7 +39,8 @@ static int codec_compare(const PayloadType *a, const PayloadType *b){
 	if (ra<rb) return -1;
 	return 0;
 }
-static void assign_payload_type(sip_voice_service_t *lc, PayloadType *const_pt, int number, const char *recv_fmtp){
+static void assign_payload_type(sip_voice_service_t *lc, PayloadType *const_pt, int number, const char *recv_fmtp)
+{
 	PayloadType *pt;
 	
 #ifdef ANDROID
@@ -76,7 +80,8 @@ static void assign_payload_type(sip_voice_service_t *lc, PayloadType *const_pt, 
 	rtp_profile_set_payload(lc->default_profile,number,pt);
 	lc->payload_types=ms_list_append(lc->payload_types,pt);
 }
-static MSList *add_missing_codecs(sip_voice_service_t *lc, SalStreamType mtype, MSList *l){
+static MSList *add_missing_codecs(sip_voice_service_t *lc, SalStreamType mtype, MSList *l)
+{
 	int i;
 	for(i=0;i<RTP_PROFILE_MAX_PAYLOADS;++i){
 		PayloadType *pt=rtp_profile_get_payload(lc->default_profile,i);
@@ -118,7 +123,8 @@ void WinSleep(int usec){
 #define WinSleep ms_usleep
 #endif
 //监听函数
-static void* sip_message_listen_fun(void* arg){
+static void* sip_message_listen_fun(void* arg)
+{
 	sip_voice_service_t* s=(sip_voice_service_t*)arg;
 	while(s->running){
 		//开始监听服务
@@ -128,7 +134,8 @@ static void* sip_message_listen_fun(void* arg){
 	return NULL;
 }
 //设置语音数据
-void sip_voice_service_set_audio_data(sip_voice_service_t* s,uint8_t* data,int len){
+void sip_voice_service_set_audio_data(sip_voice_service_t* s,uint8_t* data,int len)
+{
 	if(s->channel){
 		mblk_t* om=allocb(len,0);
 		memcpy(om->b_wptr,data,len);
@@ -141,13 +148,15 @@ void sip_voice_service_set_audio_data(sip_voice_service_t* s,uint8_t* data,int l
 	}
 }
 //设置语音数据回调
-void sip_voice_service_set_audio_data_cb(sip_voice_service_t* s,on_audio_data_cb cb,on_session_close_cb close_cb,on_session_created_cb call_cb){
+void sip_voice_service_set_audio_data_cb(sip_voice_service_t* s,on_audio_data_cb cb,on_session_close_cb close_cb,on_session_created_cb call_cb)
+{
 	s->cb=cb;
 	s->close_cb=close_cb;
 	s->call_cb=call_cb;
 }
 //新建
-sip_voice_service_t* sip_voice_service_new(void* ud){
+sip_voice_service_t* sip_voice_service_new(void* ud)
+{
 	sip_voice_service_t* s=ms_new0(sip_voice_service_t,1);
 	s->auto_answer=1;
 	s->ud=ud;
@@ -197,7 +206,8 @@ sip_voice_service_t* sip_voice_service_new(void* ud){
 	return s;
 }
 //销毁
-void sip_voice_service_destroy(sip_voice_service_t* s){
+void sip_voice_service_destroy(sip_voice_service_t* s)
+{
 	if(s->m_call)terminate_call(s);
 	s->running=0;
 	ms_thread_join(s->_th,NULL);
@@ -223,19 +233,22 @@ void sip_voice_service_destroy(sip_voice_service_t* s){
 }
 
 //for testing
-void sip_voice_service_set_rec_filename(sip_voice_service_t* s,const char* filename){
+void sip_voice_service_set_rec_filename(sip_voice_service_t* s,const char* filename)
+{
 	if(s->m_call){
 		ms_filter_call_method(s->m_call->stream->record,MS_FILE_REC_OPEN,(void*)filename);
 	}
 }
 //start recording
-void sip_voice_service_rec_start(sip_voice_service_t* s){
+void sip_voice_service_rec_start(sip_voice_service_t* s)
+{
 	if(s->m_call){
 		ms_filter_call_method(s->m_call->stream->record,MS_FILE_REC_START,NULL);
 	}
 }
 //stop recording;
-void sip_voice_service_rec_stop(sip_voice_service_t* s){
+void sip_voice_service_rec_stop(sip_voice_service_t* s)
+{
 	if(s->m_call){
 		ms_filter_call_method(s->m_call->stream->record,MS_FILE_REC_STOP,NULL);
 		ms_filter_call_method(s->m_call->stream->record,MS_FILE_REC_CLOSE,NULL);
