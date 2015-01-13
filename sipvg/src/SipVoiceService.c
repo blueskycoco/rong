@@ -158,7 +158,7 @@ void sip_voice_service_set_audio_data_cb(sip_voice_service_t* s,on_audio_data_cb
 sip_voice_service_t* sip_voice_service_new(void* ud)
 {
 	sip_voice_service_t* s=ms_new0(sip_voice_service_t,1);
-	s->auto_answer=1;
+	//s->auto_answer=1;
 	s->ud=ud;
 	//ortp ≥ı ºªØ
 	ortp_init();

@@ -6,7 +6,7 @@
 #include "mediastreamer2/mssndcard.h"
 #include "mschannel.h"
 #define RECORD_TO_FILE 0
-#define CARD_D "plughw:0,1"
+#define CARD_D "plughw:0,2"
 
 static void disable_checksums(ortp_socket_t sock) {
 #if defined(DISABLE_CHECKSUMS) && defined(SO_NO_CHECK)
@@ -57,7 +57,13 @@ audio_stream_t* audio_stream_new(int loc_rtp_port, int loc_rtcp_port){
 	{
 		ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(CARD_D,CARD_D));
 		card_playback = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),CARD_D);
+		if(card_playback==NULL)
+			ms_error("get card_playback twice failed\r\n");
+		else
+			ms_warning("get card_playback twice ok\r\n");
 	}
+	else
+		ms_warning("get card_playback first time ok\r\n");
 	s->record=ms_snd_card_create_writer(card_playback);
 	int rate = 8000;
 	ms_filter_call_method (s->record, MS_FILTER_SET_SAMPLE_RATE,	&rate);

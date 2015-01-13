@@ -5,7 +5,7 @@
 #include "mediastreamer2/msticker.h"
 #include "mschannel.h"
 #define PLAY_FROM_FILE 0
-#define CARD_S "plughw:0,1"
+#define CARD_S "plughw:0,2"
 typedef struct test_audio_file_t
 {
 	sip_voice_service_t* s;
@@ -33,8 +33,18 @@ test_audio_file_t* test_audio_file_new(sip_voice_service_t* s,const char* filena
 	#if PLAY_FROM_FILE
 	t->player=ms_filter_new(MS_FILE_PLAYER_ID);
 	#else
-	ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(CARD_S,CARD_S));
 	MSSndCard *card_capture = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),CARD_S);
+	if(card_capture==NULL)
+	{
+		ms_snd_card_manager_add_card(ms_snd_card_manager_get(),ms_alsa_card_new_custom(CARD_S,CARD_S));		
+		card_capture = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),CARD_S);
+		if(card_capture==NULL)
+			ms_error("get card_capture twice failed\r\n");
+		else
+			ms_warning("get card_capture twice ok\r\n");
+	}
+	else
+		ms_warning("get card_caputre first time ok\r\n");
 	t->player=ms_snd_card_create_reader(card_capture);
 	int rate = 8000;
 	ms_filter_call_method (t->player, MS_FILTER_SET_SAMPLE_RATE,	&rate);
