@@ -30,17 +30,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static int run=1;
 
-static void stop(int signum){
+static void stop(int signum)
+{
 	run=0;
 }
 
-static void print_usage(void){
+static void print_usage(void)
+{
 	printf("echo\t\t[--card1 <sound card1 name>]\n"
 	       "\t\t[--card2 <sound card2 name>]\n");
 	exit(-1);
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
 	MSFilter *f1_r,*f1_w,*f2_r,*f2_w;
 	MSSndCard *card_capture1,*card_capture2;
 	MSSndCard *card_playback1,*card_playback2;
@@ -57,13 +60,19 @@ int main(int argc, char *argv[]){
 	signal(SIGINT,stop);
 
 	
-	for(i=1;i<argc;++i){
-		if (strcmp(argv[i],"--help")==0){
+	for(i=1;i<argc;++i)
+	{
+		if (strcmp(argv[i],"--help")==0)
+		{
 			print_usage();
-		}else if (strcmp(argv[i],"--card1")==0){
+		}
+		else if (strcmp(argv[i],"--card1")==0)
+		{
 			i++;
 			capt_card1=play_card1=argv[i];
-		}else if (strcmp(argv[i],"--card2")==0){
+		}
+		else if (strcmp(argv[i],"--card2")==0)
+		{
 			i++;
 			capt_card2=play_card2=argv[i];
 		}
@@ -76,37 +85,49 @@ int main(int argc, char *argv[]){
 	card_capture2 = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),capt_card2);
 	card_playback2 = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),play_card2);
 	
-	if (card_playback1==NULL || card_capture1==NULL ||card_playback2==NULL || card_capture2==NULL){
-		ms_error("No card.");
+	if (card_playback1==NULL || card_capture1==NULL ||card_playback2==NULL || card_capture2==NULL)
+	{
+		if(card_playback1==NULL)
+		ms_error("No card. card_playback1 %s",capt_card1);
+		if(card_capture1==NULL)
+		ms_error("No card. card_capture1 %s",capt_card1);
+		if(card_playback2==NULL)
+		ms_error("No card. card_playback2 %s",capt_card2);
+		if(card_capture2==NULL)
+		ms_error("No card. card_capture2 %s",capt_card2);
 		return -1;
 	}
 	f1_r=ms_snd_card_create_reader(card_capture1);
 	f2_w=ms_snd_card_create_writer(card_playback2);
 	f1_w=ms_snd_card_create_reader(card_playback1);
 	f2_r=ms_snd_card_create_writer(card_capture2);
+	if(f1_r!=NULL&&f1_w!=NULL&&f2_r!=NULL&&f2_w!=NULL)
+	{
+		ms_filter_call_method (f1_r, MS_FILTER_SET_SAMPLE_RATE,	&rate);
+		ms_filter_call_method (f2_r, MS_FILTER_SET_SAMPLE_RATE,	&rate);
+		ms_filter_call_method (f1_w, MS_FILTER_SET_SAMPLE_RATE,	&rate);
+		ms_filter_call_method (f2_w, MS_FILTER_SET_SAMPLE_RATE,	&rate);
 
-	ms_filter_call_method (f1_r, MS_FILTER_SET_SAMPLE_RATE,	&rate);
-	ms_filter_call_method (f2_r, MS_FILTER_SET_SAMPLE_RATE,	&rate);
-	ms_filter_call_method (f1_w, MS_FILTER_SET_SAMPLE_RATE,	&rate);
-	ms_filter_call_method (f2_w, MS_FILTER_SET_SAMPLE_RATE,	&rate);
-
-	ticker1=ms_ticker_new();
-	ticker2=ms_ticker_new();
-	ms_filter_link(f1_r,0,f2_w,0);
-	ms_filter_link(f2_r,0,f1_w,0);
-	ms_ticker_attach(ticker1,f1_r);
-	ms_ticker_attach(ticker2,f2_r);
-	while(run)
-		ms_sleep(1);
-	ms_ticker_detach(ticker1,f1_r);
-	ms_ticker_detach(ticker2,f2_r);
-	ms_ticker_destroy(ticker1);
-	ms_ticker_destroy(ticker2);
-	ms_filter_unlink(f1_r,0,f2_w,0);
-	ms_filter_unlink(f2_r,0,f1_w,0);
-	ms_filter_destroy(f1_r);
-	ms_filter_destroy(f2_r);
-	ms_filter_destroy(f1_w);
-	ms_filter_destroy(f2_w);
+		ticker1=ms_ticker_new();
+		ticker2=ms_ticker_new();
+		ms_filter_link(f1_r,0,f2_w,0);
+		ms_filter_link(f2_r,0,f1_w,0);
+		ms_ticker_attach(ticker1,f1_r);
+		ms_ticker_attach(ticker2,f2_r);
+		while(run)
+			ms_sleep(1);
+		ms_ticker_detach(ticker1,f1_r);
+		ms_ticker_detach(ticker2,f2_r);
+		ms_ticker_destroy(ticker1);
+		ms_ticker_destroy(ticker2);
+		ms_filter_unlink(f1_r,0,f2_w,0);
+		ms_filter_unlink(f2_r,0,f1_w,0);
+		ms_filter_destroy(f1_r);
+		ms_filter_destroy(f2_r);
+		ms_filter_destroy(f1_w);
+		ms_filter_destroy(f2_w);
+	}
+	else
+		ms_error("f1_r,f1_w,f2_r,f2_w create failed\r\n");
 	return 0;
 }
