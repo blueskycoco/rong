@@ -33,6 +33,7 @@ static int run=1;
 static void stop(int signum)
 {
 	run=0;
+	printf("to stop exe\r\n");
 }
 
 static void print_usage(void)
@@ -113,8 +114,8 @@ int main(int argc, char *argv[])
 	
 	f1_r=ms_snd_card_create_reader(card_capture1);
 	f2_w=ms_snd_card_create_writer(card_playback2);
-	f1_w=ms_snd_card_create_reader(card_playback1);
-	f2_r=ms_snd_card_create_writer(card_capture2);
+	f1_w=ms_snd_card_create_writer(card_playback1);
+	f2_r=ms_snd_card_create_reader(card_capture2);
 	if(f1_r!=NULL&&f1_w!=NULL&&f2_r!=NULL&&f2_w!=NULL)
 	{
 		ms_filter_call_method (f1_r, MS_FILTER_SET_SAMPLE_RATE,	&rate);
@@ -126,22 +127,23 @@ int main(int argc, char *argv[])
 		ms_ticker_set_name(ticker1,"card1 to card2");
 		ticker2=ms_ticker_new();
 		ms_ticker_set_name(ticker2,"card2 to card1");
-		ms_filter_link(f1_r,0,f2_w,0);		
-		ms_ticker_attach(ticker1,f1_r);
+		ms_filter_link(f1_r,0,f2_w,0);	 	
 		ms_filter_link(f2_r,0,f1_w,0);
-		//ms_ticker_attach(ticker2,f2_r);
-		while(run)
-			ms_sleep(1);
-		ms_ticker_detach(ticker1,f1_r);
-		ms_ticker_detach(ticker2,f2_r);
-		ms_ticker_destroy(ticker1);
-		ms_ticker_destroy(ticker2);
-		ms_filter_unlink(f1_r,0,f2_w,0);
-		ms_filter_unlink(f2_r,0,f1_w,0);
-		ms_filter_destroy(f1_r);
-		ms_filter_destroy(f2_r);
-		ms_filter_destroy(f1_w);
-		ms_filter_destroy(f2_w);
+		ms_ticker_attach(ticker1,f1_r);
+		ms_ticker_attach(ticker2,f2_r);		
+		//while(run)
+			ms_sleep(3);
+		//if(ticker1) ms_ticker_detach(ticker1,f1_r);
+		if(f1_r&&f2_w) ms_filter_unlink(f1_r,0,f2_w,0);
+		//if(ticker1) ms_ticker_destroy(ticker1);
+		if(f1_r) ms_filter_destroy(f1_r);
+		if(f2_w) ms_filter_destroy(f2_w);
+		
+		//if(ticker2) ms_ticker_detach(ticker2,f2_r);
+		if(f2_r&&f1_w)ms_filter_unlink(f2_r,0,f1_w,0);
+		//if(ticker2) ms_ticker_destroy(ticker2);
+		if(f2_r) ms_filter_destroy(f2_r);
+		if(f1_w) ms_filter_destroy(f1_w);
 	}
 	else
 		ms_error("f1_r,f1_w,f2_r,f2_w create failed\r\n");
