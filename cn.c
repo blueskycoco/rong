@@ -132,16 +132,15 @@ int main(int argc, char *argv[])
 		ms_ticker_attach(ticker1,f1_r);
 		ms_ticker_attach(ticker2,f2_r);		
 		//while(run)
-			ms_sleep(3);
-		//if(ticker1) ms_ticker_detach(ticker1,f1_r);
+		ms_sleep(3);
+		if(ticker1) ms_ticker_detach(ticker1,f1_r);
 		if(f1_r&&f2_w) ms_filter_unlink(f1_r,0,f2_w,0);
-		//if(ticker1) ms_ticker_destroy(ticker1);
+		if(ticker1) ms_ticker_destroy(ticker1);
 		if(f1_r) ms_filter_destroy(f1_r);
 		if(f2_w) ms_filter_destroy(f2_w);
-		
-		//if(ticker2) ms_ticker_detach(ticker2,f2_r);
+		if(ticker2) ms_ticker_detach(ticker2,f2_r);
 		if(f2_r&&f1_w)ms_filter_unlink(f2_r,0,f1_w,0);
-		//if(ticker2) ms_ticker_destroy(ticker2);
+		if(ticker2) ms_ticker_destroy(ticker2);
 		if(f2_r) ms_filter_destroy(f2_r);
 		if(f1_w) ms_filter_destroy(f1_w);
 	}

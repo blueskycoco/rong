@@ -30,7 +30,7 @@ $(LIB):$(OBJS)
 	mkdir -p /home/rdp/sipvg/include/voicegw
 	cp -rf include/* /home/rdp/sipvg/include/voicegw
 $(TARGET):$(LIB) $(MAIN_OBJS)
-	$(CC) -o $@ $(MAIN_OBJS) $(FLAG_COMPILE) $(LDFLAGS) $(LIB) /home/rdp/sipvg/lib/libsal.a
+	$(CC) -o $@ $(MAIN_OBJS) $(FLAG_COMPILE) $(LDFLAGS) $(LIB) /home/rdp/sipvg/lib/libsal.a /home/rdp/work/project/dm3730/arm-2009q1/arm-none-linux-gnueabi/libc/armv4t/usr/lib/libc.a
 $(OBJS): %.o: %.c $(INCLUDE) 
 	mkdir -p objs/src
 	$(CC) -c $(FLAG_COMPILE) $< 
