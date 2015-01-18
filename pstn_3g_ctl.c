@@ -207,18 +207,19 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 			while(buf[i]!='\"')
 				buf2[j++]=buf[i++];
 			buf2[j]='\0';
-			buf2[0]=0;
-			printf("Calling in 3G1 %s\r\n",buf2);
-			return 0;
+			buf2[0]='1';
+			printf("Calling in 3G1 %s\r\n",*out);
+			return 1;
 		}
 		else
 		{/*hang up info*/
-			printf("no Ring in from 3g1\r\n");
+			//printf("no Ring in from 3g1\r\n");
 			if(strncmp(buf,"\r\n^CEND",7)==0)
 			{
+				printf("3G1 in CEND\r\n");
 				*out=(char *)malloc(sizeof(char));
-				*out[0]=2;
-				return 2;
+				*out[0]='3';
+				return 3;
 			}
 		}
 	}
@@ -236,9 +237,9 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 		memset(buf2,'\0',20);
 		memcpy(*(out+1),buf,strlen(buf));
 		buf2[strlen(buf)+1]='\0';
-		buf2[0]=1;
-		printf("Calling in PSTN %s\r\n",buf);
-		return 1;
+		buf2[0]='2';
+		printf("Calling in PSTN %s\r\n",*out);
+		return 2;
 	}
 	//check 3g2 hang up
 	i=0;
@@ -249,12 +250,13 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	if(i!=0)
 	{
 		buf[i]='\0';
-		printf("3G in %s\r\n",buf);
+		
 		if(strncmp(buf,"\r\n^CEND",7)==0)
 		{
+			printf("3G2 in CEND\r\n");
 			*out=(char *)malloc(sizeof(char));
-			*out[0]=3;
-			return 3;
+			*out[0]='4';
+			return 4;
 		}
 	}
 	//return 4;
@@ -289,7 +291,8 @@ int main(int argc,char *argv[])
 	int fd_3g1=0;
 	int fd_3g2=0;
 	int fd_pstn=0;
-	int father_pid=getpid();	
+	int father_pid=getpid();
+	int child_pid;
 	init_mixer();
 	if((fd_3g2=open_com_port(2))<0)
 	{
@@ -328,16 +331,30 @@ int main(int argc,char *argv[])
 	{
 		/*in child process,accept or reject 3g1,pstn call, get phone num from sipvg ,dial 3g2 out,or hang up*/	
 		signal(SIGINT,stop);
-		int child_pid=getpid();
-		const char *fifo_name = "/tmp/from_sipvg";	
-		int pipe_fd = open(fifo_name, O_RDONLY); 
+		child_pid=getpid();
+		const char *fifo_name_r = "/tmp/from_sipvg";	
+		if(access(fifo_name_r, F_OK) == -1)  
+    	{          
+	        int res = mkfifo(fifo_name_r, 0777);  
+	        if(res != 0)  
+	        {  
+	            fprintf(stderr, "pstn_3g_ctl child process %d Could not create fifo %s\n",father_pid, fifo_name_r);  
+	            exit(-1);  
+	        }  
+    	}  
+		int pipe_fd_r = open(fifo_name_r, O_RDONLY/*|O_NONBLOCK*/); 
 		printf("pstn_3g_ctl child process %d open fifo over\r\n",child_pid);
-		char command[PIPE_BUF+1],read_bytes,hang_up_pstn;
+		char command[PIPE_BUF+1],read_bytes,hang_up_pstn,*ptr;
 		while(run)
 		{
 			 memset(command,'\0',sizeof(command));
-			 read_bytes = read(pipe_fd, command, PIPE_BUF);
-			 switch(command[0])
+			 ptr=command;
+			 read_bytes = read(pipe_fd_r, ptr, PIPE_BUF);
+			 
+			 if(read_bytes>0)
+			 {
+			 printf("pstn read_bytes %d,%s\r\n",read_bytes,ptr);
+			 switch(*ptr)
 			 {
 				case 0://hang up 3g1 and pstn and 3g2 call
 				{
@@ -350,76 +367,90 @@ int main(int argc,char *argv[])
 				break;
 				case 1://accept 3g1 and dial 3g2 out from command[1]
 				{
-					printf("pstn_3g_ctl child process %d accept 3g1 and dial 3g2 out %s\r\n",child_pid,&command[1]);
+					printf("pstn_3g_ctl child process %d accept 3g1 and dial 3g2 out %s\r\n",child_pid,(char *)(ptr+1));
 					phone_process(fd_3g1,3,NULL);
-					phone_process(fd_3g2,0,(char *)&command[1]);
+					phone_process(fd_3g2,0,(char *)(ptr+1));
 				}
 				break;
 				case 2://accept pstn and dial 3g2 out from command[1]
 				{
-					printf("pstn_3g_ctl child process %d accept pstn and dial 3g2 out %s\r\n",child_pid,&command[1]);
+					printf("pstn_3g_ctl child process %d accept pstn and dial 3g2 out %s\r\n",child_pid,(char *)(ptr+1));
 					hang_up_pstn=1;
 					write(fd_pstn, &hang_up_pstn, sizeof(char));  
-					phone_process(fd_3g2,0,(char *)&command[1]);
+					phone_process(fd_3g2,0,(char *)(ptr+1));
 				}
 				break;
 				case 3://accept voip and dial 3g2 out from command[1]
 				{
-					printf("pstn_3g_ctl child process %d accept pstn and dial 3g2 out %s\r\n",child_pid,&command[1]);	
-					phone_process(fd_3g2,0,(char *)&command[1]);
+					printf("pstn_3g_ctl child process %d accept voip and dial 3g2 out %s\r\n",child_pid,(char *)(ptr+1));	
+					phone_process(fd_3g1,0,(char *)(ptr+1));
 				}
 				break;
 			 }
+			}
 		}
 		printf("pstn_3g_ctl child process %d exit\r\n",child_pid);
-		close(pipe_fd);
+		close(pipe_fd_r);
 		return 0;
 	}
 	else
 	{
 		/*in father process,mon 3g1,pstn coming in call,and transfer to sipvg process*/	
 		signal(SIGINT,stop);
-		const char *fifo_name = "/tmp/to_sipvg";
-		if(access(fifo_name, F_OK) == -1)  
+		const char *fifo_name_w = "/tmp/to_sipvg";
+		if(access(fifo_name_w, F_OK) == -1)  
     	{          
-	        int res = mkfifo(fifo_name, 0777);  
+	        int res = mkfifo(fifo_name_w, 0777);  
 	        if(res != 0)  
 	        {  
-	            fprintf(stderr, "pstn_3g_ctl father process %d Could not create fifo %s\n",father_pid, fifo_name);  
+	            fprintf(stderr, "pstn_3g_ctl father process %d Could not create fifo %s\n",father_pid, fifo_name_w);  
 	            exit(-1);  
 	        }  
     	}  
-		int pipe_fd = open(fifo_name, O_WRONLY); 
+		int pipe_fd_w = open(fifo_name_w, O_WRONLY/*|O_NONBLOCK*/); 
 		printf("pstn_3g_ctl father process %d open fifo over\r\n",father_pid);
-		char phone_num[15];/*first byte is source(3g1 0 call in or pstn 1 call in . 3g1 2 hang up call  or 3g2 3 hang up call),last is phone_num*/
+		char phone_num[15],*ptr;/*first byte is source(3g1 0 call in or pstn 1 call in . 3g1 2 hang up call  or 3g2 3 hang up call),last is phone_num*/
 		int write_bytes,len;
 		while(run)
 		{		
-			memset(phone_num,'\0',sizeof(phone_num));
-			if(wait_phone_call(fd_3g1,fd_pstn,fd_3g2,(char **)&phone_num)!=-1)
+			memset(phone_num,'\0',strlen(phone_num));
+			ptr=phone_num;
+			if(wait_phone_call(fd_3g1,fd_pstn,fd_3g2,&ptr)!=-1)
 			{
-				printf("pstn_3g_ctl father process %d ,have %s in coming call %s\r\n",(phone_num[0]==0)?"3G1":"PSTN",&phone_num[1]);
-				len=strlen(phone_num);
-				write_bytes = write(pipe_fd, phone_num, len);  
+				if(*ptr=='1'||*ptr=='2')
+					printf("pstn_3g_ctl father process %d ,have %s in coming call %s\r\n",father_pid,(*ptr=='1')?"3G1":"PSTN",(char *)(ptr+1));
+				else
+					printf("pstn_3g_ctl father process %d ,have %s hang up call %s\r\n",father_pid,(*ptr=='3')?"3G1":"3G2",(char *)(ptr+1));
+				len=strlen(ptr);
+				printf("Send command to sipvg %s,len %d\r\n",ptr,len);
+				write_bytes = write(pipe_fd_w, ptr, len);  
 	            if(write_bytes == -1)  
 	            {  
-	                fprintf(stderr, "pstn_3g_ctl father process %d Write error on pipe\n",father_pid);  
-	                return -1;
+	                //fprintf(stderr, "pstn_3g_ctl father process %d Write error on pipe\n",father_pid);  
+	                //return -1;
 	            }
 			}
 		}
-		char exit=4;
-		write(pipe_fd, &exit, sizeof(char));  
+		char exit='5';
+		write(pipe_fd_w, &exit, sizeof(char));  
+		printf("Send command to sipvg %c,len %d\r\n",exit,sizeof(char));
         if(write_bytes == -1)  
         {  
             fprintf(stderr, "pstn_3g_ctl father process %d Write error on pipe\n",father_pid);  
             return -1;
         }
-		close(pipe_fd);
+		close(pipe_fd_w);
 		close(fd_3g1);
 		close(fd_3g2);
 		close(fd_pstn);
 	}
+	int pr;
+	do
+	{
+		pr=waitpid(fpid,NULL,WNOHANG);
+		sleep(1);
+	}while(pr!=fpid);
+	printf("get child exit\r\n");
 	printf("pstn_3g_ctl father process %d exit\r\n",father_pid);
 #if 0
 	int i=0,k=0,m=0,next_write=0;
@@ -525,6 +556,7 @@ int main(int argc,char *argv[])
 		}
 	}
 	#endif
+	//wait_pid(child_pid);
 	return 0;
 }
 

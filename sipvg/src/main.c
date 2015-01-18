@@ -21,8 +21,13 @@
 
 int g_fd_1,g_fd_2;
 int pipe_fd_w;
+#define LINE_ALL_OFF 0
+#define LINE_3G1_3G2 1
+#define LINE_PSTN_3G2 2
+#define LINE_VOIP_3G2 3
 
-static int run=1,sipvg_on=0;
+int Line_on=LINE_ALL_OFF;
+static int run=1;
 char phone_in[100][20];
 char phone_out[100][20];
 int g_phone_len;
@@ -67,35 +72,47 @@ void on_call_hang(sip_voice_service_t* s)
 		test_audio_file_destroy(ta);
 		ta=NULL;
 	}
-	char cmd=0;
-	write(pipe_fd_w,&cmd,sizeof(char));
-	sipvg_on=0;
+	terminate_call(s);
+	char cmd[2];
+	cmd[0]=0;
+	cmd[1]='\0';
+	write(pipe_fd_w,cmd,sizeof(char));
+	Line_on=LINE_ALL_OFF;
 }
 int process_phone(char *phone,char out)
 {
 	int i,result=0;
 	for(i=0;i<g_phone_len;i++)
-		if(strncmp(phone_in[i],phone,strlen(phone_in[i])&&strlen(phone)==strlen(phone_in[i]))==0)
+	{
+		printf("to compare %s<==>%s\r\n",phone_in[i],phone);
+		if(strncmp(phone_in[i],phone,strlen(phone_in[i]))==0)
 		{
-			printf("accept %s call, transfer to %s 3G2 out\r\n",phone,phone_out[i]);
+			printf("%d accept %s call, transfer to %s 3G2 out\r\n",i,phone,phone_out[i]);
 			char *cmd=(char *)malloc(strlen(phone_out[i])+2);
 			memset(cmd,'\0',strlen(phone_out[i])+2);
 			cmd[0]=out;
 			strcpy(&cmd[1],phone_out[i]);
-			write(pipe_fd_w,&cmd,strlen(cmd));
+			write(pipe_fd_w,cmd,strlen(cmd));
 			free(cmd);
-			sipvg_on=1;
+			if(out==1)
+				Line_on=LINE_3G1_3G2;
+			else if(out==2)
+				Line_on=LINE_PSTN_3G2;
+			else if(out==3)
+				Line_on=LINE_VOIP_3G2;
 			result=1;
 			break;
 		}
+	}
 	return result;
 }
 int on_call_in(sip_voice_service_t* s,char* caller)
 {
 	ms_warning("caller %s\r\b",caller);
-	if(sipvg_on==0)
+	if(Line_on==LINE_ALL_OFF)
 	{
-		if(process_phone(strchr(caller,':'),3)==1)
+		char *ptr=strchr(caller,':');
+		if(process_phone((char *)(ptr+1),3)==1)
 		{
 			accept_call(s,s->m_call);
 			if(ta==NULL)
@@ -259,9 +276,18 @@ int main(int argc,const char** argv)
             fprintf(stderr, "sipvg Could not create fifo %s\n",fifo_name_w);  
             exit(-1);  
         }  
-	}  	
-	pipe_fd_w = open(fifo_name_w, O_WRONLY);
-	int pipe_fd_r = open(fifo_name_r, O_RDONLY);
+	}  
+	if(access(fifo_name_r, F_OK) == -1)  
+	{          
+        int res = mkfifo(fifo_name_r, 0777);  
+        if(res != 0)  
+        {  
+            fprintf(stderr, "sipvg Could not create fifo %s\n",fifo_name_r);  
+            exit(-1);  
+        }  
+	}  
+	pipe_fd_w = open(fifo_name_w, O_WRONLY/*|O_NONBLOCK*/);
+	int pipe_fd_r = open(fifo_name_r, O_RDONLY/*|O_NONBLOCK*/);
 	printf("sipvg  open fifo wr over\r\n");
 	char command[PIPE_BUF+1],read_bytes;
 	audio_path=ms_new0(audio_path_t,1);
@@ -309,44 +335,52 @@ int main(int argc,const char** argv)
 	}
 	while(run)
 	{
+		char *ptr;
 		 memset(command,'\0',sizeof(command));
-		 read_bytes = read(pipe_fd_r, command, PIPE_BUF);
-		 switch(command[0])
+		 ptr=command;
+		 read_bytes = read(pipe_fd_r, ptr, PIPE_BUF);
+		// printf("sipvg read_bytes %d\r\n",read_bytes);
+		 if(read_bytes>0)
+		 	{
+		 	printf("sipvg read_bytes %d,%s\r\n",read_bytes,ptr);
+		 switch(*ptr)
 		 {
-			case 0://3g1 incomming call with phone num
+			case '1'://3g1 incomming call with phone num
 			{
-				printf("3G1 incomming call with phone num %s\r\n",&command[1]);
-				if(process_phone(&command[1],1)==1)
+				printf("3G1 incomming call with phone num %s\r\n",(char *)(ptr+1));
+				if(process_phone((char *)(ptr+1),1)==1)
 				{
 					connect_audio_path(audio_path,1,2,true);
 				}
 			}
 			break;
-			case 1://pstn incomming call with phone num
+			case '2'://pstn incomming call with phone num
 			{
-				printf("pstn incomming call with phone num %s\r\n",&command[1]);
-				if(process_phone(&command[1],2)==1)
+				printf("pstn incomming call with phone num %s\r\n",(char *)(ptr+1));
+				if(process_phone((char *)(ptr+1),2)==1)
 				{
 					connect_audio_path(audio_path,3,2,true);
 				}
 			}
 			break;
-			case 2://3g1 hang up
+			case '3'://3g1 hang up
 			{
 				printf("3g1 hang up\r\n");
-				if(sipvg_on==1)
+				if(Line_on==LINE_3G1_3G2)
 				{
 					connect_audio_path(audio_path,0,0,false);
-					char cmd=0;
-					write(pipe_fd_w,&cmd,sizeof(char));
-					sipvg_on=0;
+					char cmd[2];
+					cmd[0]=0;
+					cmd[1]='\0';
+					write(pipe_fd_w,cmd,sizeof(char));
+					Line_on=LINE_ALL_OFF;
 				}
 			}
 			break;
-			case 3://3g2 hang up
+			case '4'://3g2 hang up
 			{
 				printf("3g2 hang up\r\n");
-				if(sipvg_on==1)
+				if(Line_on==LINE_3G1_3G2 ||Line_on==LINE_PSTN_3G2 ||Line_on==LINE_VOIP_3G2)
 				{
 					connect_audio_path(audio_path,0,0,false);
 					if(ta)
@@ -355,19 +389,21 @@ int main(int argc,const char** argv)
 						test_audio_file_destroy(ta);
 						ta=NULL;
 					}
-					char cmd=0;
-					write(pipe_fd_w,&cmd,sizeof(char));
-					sipvg_on=0;
+					char cmd[2];
+					cmd[0]=0;cmd[1]='\0';
+					write(pipe_fd_w,cmd,sizeof(char));
+					Line_on=LINE_ALL_OFF;
 				}
 			}
 			break;
-			case 4://exit 
+			case '5'://exit 
 			{
 				printf("sipvg exit\r\n");
 				run=0;
 			}
 			break;
 		 }
+		 	}
 	}
 #if 0
 	while(1)
