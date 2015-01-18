@@ -54,13 +54,9 @@ int main(int argc, char *argv[])
 	int rate = 8000;
 	int i;
 	const char *alsadev=NULL;
-	printf("main 1\r\n");
 	ortp_init();
-	printf("main 2\r\n");
 	ortp_set_log_level_mask(ORTP_MESSAGE|ORTP_WARNING|ORTP_ERROR|ORTP_FATAL);
-	printf("main 3\r\n");
 	ms_init();
-	printf("ms_init over\r\n");
 	signal(SIGINT,stop);
 
 	
