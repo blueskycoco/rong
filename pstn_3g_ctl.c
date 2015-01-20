@@ -218,26 +218,37 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 			{
 				printf("3G1 in CEND\r\n");
 				*out=(char *)malloc(sizeof(char));
-				*out[0]='3';
-				return 3;
+				*out[0]='4';
+				return 4;
 			}
 		}
 	}
 	//check Calling in from PSTN
 	i=0;
-	while(read(fd_pstn,&ch,1)==1)
+	/*while(read(fd_pstn,&ch,1)==1)
 	{
+		printf("pstn:%c\r\n",ch);
 		buf[i++]=ch;
-	}
+	}*/
+	char *ptr=buf;
+	i=read(fd_pstn,ptr,100);
 	if(i!=0)
 	{
-		buf[i]='\0';
+		printf("1\r\n");
+		*(ptr+i)='\0';
+		printf("2\r\n");
 		*out=(char *)malloc(20*sizeof(char));
+		printf("3\r\n");
 		buf2=*out;  
+		printf("4\r\n");
 		memset(buf2,'\0',20);
-		memcpy(*(out+1),buf,strlen(buf));
-		buf2[strlen(buf)+1]='\0';
+		printf("5\r\n");
+		memcpy((void *)(*out+1),ptr,i);
+		printf("6\r\n");
+		buf2[i+1]='\0';
+		printf("7\r\n");
 		buf2[0]='2';
+		printf("8\r\n");
 		printf("Calling in PSTN %s\r\n",*out);
 		return 2;
 	}
@@ -323,6 +334,10 @@ int main(int argc,char *argv[])
 		printf("open PSTN .....\n");
 	//open 3g phone num display
 	phone_process(fd_3g1,1,NULL);			
+	phone_process(fd_3g1,2,NULL);
+	phone_process(fd_3g2,2,NULL);
+	char init_pstn=0;
+	write(fd_pstn, &init_pstn, sizeof(char)); 
 
 	fpid=fork();
 	if(fpid<0)
@@ -377,7 +392,7 @@ int main(int argc,char *argv[])
 					printf("pstn_3g_ctl child process %d accept pstn and dial 3g2 out %s\r\n",child_pid,(char *)(ptr+1));
 					hang_up_pstn=1;
 					write(fd_pstn, &hang_up_pstn, sizeof(char));  
-					phone_process(fd_3g2,0,(char *)(ptr+1));
+					phone_process(fd_3g1,0,(char *)(ptr+1));
 				}
 				break;
 				case 3://accept voip and dial 3g2 out from command[1]

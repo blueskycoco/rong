@@ -359,7 +359,7 @@ int main(int argc,const char** argv)
 				printf("pstn incomming call with phone num %s\r\n",(char *)(ptr+1));
 				if(process_phone((char *)(ptr+1),2)==1)
 				{
-					connect_audio_path(audio_path,3,2,true);
+					connect_audio_path(audio_path,3,1,true);
 				}
 			}
 			break;
@@ -388,6 +388,8 @@ int main(int argc,const char** argv)
 						test_audio_file_stop(ta);
 						test_audio_file_destroy(ta);
 						ta=NULL;
+					
+					terminate_call(vg);
 					}
 					char cmd[2];
 					cmd[0]=0;cmd[1]='\0';
