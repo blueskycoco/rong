@@ -104,6 +104,13 @@ int process_phone(char *phone,char out)
 			break;
 		}
 	}
+	if(result!=1)
+		{
+		char cmd[2];
+					cmd[0]=0;cmd[1]='\0';
+					write(pipe_fd_w,cmd,sizeof(char));
+					Line_on=LINE_ALL_OFF;
+		}
 	return result;
 }
 int on_call_in(sip_voice_service_t* s,char* caller)
