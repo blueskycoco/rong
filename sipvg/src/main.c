@@ -366,7 +366,7 @@ int main(int argc,const char** argv)
 				printf("pstn incomming call with phone num %s\r\n",(char *)(ptr+1));
 				if(process_phone((char *)(ptr+1),2)==1)
 				{
-					connect_audio_path(audio_path,3,1,true);
+					connect_audio_path(audio_path,3,2,true);
 				}
 			}
 			break;

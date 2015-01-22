@@ -191,7 +191,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	if(i!=0)
 	{
 		buf[i]='\0';
-		printf("3G in %s\r\n",buf);
+		printf("3G1 in %s\r\n",buf);
 		if(strncmp(buf,"\r\nRING",6)==0)
 		{
 			*out=(char *)malloc(20*sizeof(char));
@@ -218,8 +218,8 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 			{
 				printf("3G1 in CEND\r\n");
 				*out=(char *)malloc(sizeof(char));
-				*out[0]='4';
-				return 4;
+				*out[0]='3';
+				return 3;
 			}
 		}
 	}
@@ -234,21 +234,13 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	i=read(fd_pstn,ptr,100);
 	if(i!=0)
 	{
-		printf("1\r\n");
 		*(ptr+i)='\0';
-		printf("2\r\n");
 		*out=(char *)malloc(20*sizeof(char));
-		printf("3\r\n");
 		buf2=*out;  
-		printf("4\r\n");
 		memset(buf2,'\0',20);
-		printf("5\r\n");
 		memcpy((void *)(*out+1),ptr,i);
-		printf("6\r\n");
 		buf2[i+1]='\0';
-		printf("7\r\n");
 		buf2[0]='2';
-		printf("8\r\n");
 		printf("Calling in PSTN %s\r\n",*out);
 		return 2;
 	}
@@ -261,7 +253,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	if(i!=0)
 	{
 		buf[i]='\0';
-		
+		printf("3G2 in %s\r\n",buf);
 		if(strncmp(buf,"\r\n^CEND",7)==0)
 		{
 			printf("3G2 in CEND\r\n");
@@ -392,13 +384,13 @@ int main(int argc,char *argv[])
 					printf("pstn_3g_ctl child process %d accept pstn and dial 3g2 out %s\r\n",child_pid,(char *)(ptr+1));
 					hang_up_pstn=1;
 					write(fd_pstn, &hang_up_pstn, sizeof(char));  
-					phone_process(fd_3g1,0,(char *)(ptr+1));
+					phone_process(fd_3g2,0,(char *)(ptr+1));
 				}
 				break;
 				case 3://accept voip and dial 3g2 out from command[1]
 				{
 					printf("pstn_3g_ctl child process %d accept voip and dial 3g2 out %s\r\n",child_pid,(char *)(ptr+1));	
-					phone_process(fd_3g1,0,(char *)(ptr+1));
+					phone_process(fd_3g2,0,(char *)(ptr+1));
 				}
 				break;
 			 }
