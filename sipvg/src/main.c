@@ -129,6 +129,8 @@ int on_call_in(sip_voice_service_t* s,char* caller)
 				test_audio_file_start(ta);
 			}
 		}
+		else
+			terminate_call(s);
 	}
 	else
 	{
