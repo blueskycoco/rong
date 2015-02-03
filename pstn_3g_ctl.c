@@ -181,7 +181,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 {
 	char buf[256],*buf2;
 	char ch;
-	int i=0,j=0,result=0;
+	int i=0,z=0,result=0;
 	memset(buf,'\0',256);
 	//check Calling in from 3G1
 	while(read(fd_3g1,&ch,1)==1)
@@ -192,35 +192,35 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	{
 		buf[i]='\0';
 		printf("3G1 in %s\r\n",buf);
-		if(strncmp(buf,"\r\nRING",6)==0)
+		if(strncmp(buf,"\r\n+CLIP:",8)==0)
 		{
+			int j=0;
 			*out=(char *)malloc(20*sizeof(char));
 			buf2=*out;  
 			memset(buf2,'\0',20);
 			i=0;
-			while(buf[i]!='\"')
+			while(buf[j]!='\"' && j<i)
 			{
-				i++;
+				j++;
 			}
-			i++;
-			j=1;
-			while(buf[i]!='\"')
-				buf2[j++]=buf[i++];
-			buf2[j]='\0';
+			j++;
+			z=1;
+			while(buf[z]!='\"' && j<i)
+				buf2[z++]=buf[j++];
+			if(j==i)
+				return -1;
+			buf2[z]='\0';
 			buf2[0]='1';
 			printf("Calling in 3G1 %s\r\n",*out);
 			return 1;
 		}
-		else
+		else if(strncmp(buf,"\r\n^CEND",7)==0)
 		{/*hang up info*/
 			//printf("no Ring in from 3g1\r\n");
-			if(strncmp(buf,"\r\n^CEND",7)==0)
-			{
 				printf("3G1 in CEND\r\n");
 				*out=(char *)malloc(sizeof(char));
 				*out[0]='3';
 				return 3;
-			}
 		}
 	}
 	//check Calling in from PSTN
