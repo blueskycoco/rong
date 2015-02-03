@@ -193,7 +193,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	if(my_count==2||i!=0)
 	{
 		buf[i]='\0';
-		printf("3G1 in %s\r\n",buf);
+		printf("%d 3G1 in %s\r\n",my_count,buf);
 		if(/*strncmp(buf,"\r\n+CLIP:",8)==0*/my_count==2)
 		{
 			int j=0;
@@ -201,19 +201,20 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 			buf2=*out;  
 			memset(buf2,'\0',20);
 			i=0;
-			while(buf[j]!='\"' && j<i)
+			while(buf[j]!='"')
 			{
 				j++;
 			}
 			j++;
+			printf("j is %d\n",j);
 			z=1;
-			while(buf[z]!='\"' && j<i)
+			while(buf[j]!='"')
 				buf2[z++]=buf[j++];
 			if(j==i)
 				return -1;
 			buf2[z]='\0';
 			buf2[0]='1';
-			printf("Calling in 3G1 %s\r\n",*out);
+			printf("z %d Calling in 3G1 %s\r\n",z,*out);
 			return 1;
 		}
 		else if(strncmp(buf,"\r\n^CEND",7)==0)
