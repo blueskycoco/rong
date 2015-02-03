@@ -180,19 +180,21 @@ int phone_process(int fd,int type,char *phone_number)
 int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 {
 	char buf[256],*buf2;
-	char ch;
+	char ch,my_count=0;
 	int i=0,z=0,result=0;
 	memset(buf,'\0',256);
 	//check Calling in from 3G1
 	while(read(fd_3g1,&ch,1)==1)
 	{
 		buf[i++]=ch;
+		if(ch=='"')
+			my_count++;
 	}
-	if(i!=0)
+	if(my_count==2||i!=0)
 	{
 		buf[i]='\0';
 		printf("3G1 in %s\r\n",buf);
-		if(strncmp(buf,"\r\n+CLIP:",8)==0)
+		if(/*strncmp(buf,"\r\n+CLIP:",8)==0*/my_count==2)
 		{
 			int j=0;
 			*out=(char *)malloc(20*sizeof(char));
