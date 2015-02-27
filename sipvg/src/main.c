@@ -415,8 +415,7 @@ int main(int argc,const char** argv)
 					break;
 			}
 		}
-		else
-			usleep(10000);
+		
 	}
 #if 0
 	while(1)
