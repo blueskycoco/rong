@@ -181,7 +181,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 {
 	char buf[256],*buf2;
 	char ch;
-	int i=0,z=0,result=0;
+	int i=0,z=0,result=0,read_phone=0;
 	memset(buf,'\0',256);
 	//check Calling in from 3G1
 	while(read(fd_3g1,&ch,1)==1)
@@ -192,6 +192,49 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	{
 		buf[i]='\0';
 		printf("3G1 in %s\r\n",buf);
+		int j,m=1;
+		for(j=0;j<i;j++)
+		{
+			//printf("%c %d ",buf[j],read_phone);
+			if(read_phone==0)
+			{
+				if(buf[j]=='"')
+				{
+					read_phone=1;
+					//if(out==NULL)
+					{
+						printf("to malloc\n");
+						//*out=(char *)malloc(20*sizeof(char));
+						buf2=*out;
+						//memset(buf2,'\0',20);
+					}
+				}
+				//printf("%c ",buf[j]);
+			}
+			else
+			{
+				if(buf[j]!='"')
+				{	
+					buf2[m++]=buf[j];
+				}
+				else
+				{
+					buf2[0]='1';
+					printf("Calling in 3G1 %s\r\n",*out);
+					return 1;
+				}
+			}
+		}
+		for(j=0;j<i;j++)
+		{
+			if(buf[j]=='C'&&buf[j+1]=='E'&&buf[j+2]=='N'&&buf[j+3]=='D')
+			{
+				printf("3G1 in CEND\r\n");
+				*out[0]='3';
+				return 3;
+			}
+		}
+		#if 0
 		if(strncmp(buf,"\r\n+CLIP:",8)==0)
 		{
 			int j=0;
@@ -222,6 +265,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 				*out[0]='3';
 				return 3;
 		}
+		#endif
 	}
 	//check Calling in from PSTN
 	i=0;
@@ -235,7 +279,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 	if(i!=0)
 	{
 		*(ptr+i)='\0';
-		*out=(char *)malloc(20*sizeof(char));
+		//*out=(char *)malloc(20*sizeof(char));
 		buf2=*out;  
 		memset(buf2,'\0',20);
 		memcpy((void *)(*out+1),ptr,i);
@@ -257,7 +301,7 @@ int wait_phone_call(int fd_3g1,int fd_pstn , int fd_3g2,char **out)
 		if(strncmp(buf,"\r\n^CEND",7)==0)
 		{
 			printf("3G2 in CEND\r\n");
-			*out=(char *)malloc(sizeof(char));
+			//*out=(char *)malloc(sizeof(char));
 			*out[0]='4';
 			return 4;
 		}
@@ -416,11 +460,11 @@ int main(int argc,char *argv[])
     	}  
 		int pipe_fd_w = open(fifo_name_w, O_WRONLY/*|O_NONBLOCK*/); 
 		printf("pstn_3g_ctl father process %d open fifo over\r\n",father_pid);
-		char phone_num[15],*ptr;/*first byte is source(3g1 0 call in or pstn 1 call in . 3g1 2 hang up call  or 3g2 3 hang up call),last is phone_num*/
+		char phone_num[15],*ptr=NULL;/*first byte is source(3g1 0 call in or pstn 1 call in . 3g1 2 hang up call  or 3g2 3 hang up call),last is phone_num*/
 		int write_bytes,len;
 		while(run)
 		{		
-			memset(phone_num,'\0',strlen(phone_num));
+			memset(phone_num,'\0',15);
 			ptr=phone_num;
 			if(wait_phone_call(fd_3g1,fd_pstn,fd_3g2,&ptr)!=-1)
 			{
@@ -437,6 +481,7 @@ int main(int argc,char *argv[])
 	                //return -1;
 	            }
 			}
+			
 		}
 		char exit='5';
 		write(pipe_fd_w, &exit, sizeof(char));  
