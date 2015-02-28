@@ -438,6 +438,19 @@ int main(int argc,char *argv[])
 							phone_process(fd_3g2,0,(char *)(ptr+1));
 						}
 						break;
+					case 4://hang up 3g1
+					{
+						printf("pstn_3g_ctl child process %d hang up 3g1\r\n",child_pid);
+						phone_process(fd_3g1,2,NULL);
+					}
+					break;
+					case 5://hang up pstn
+					{
+						printf("pstn_3g_ctl child process %d hang up pstn\r\n",child_pid);
+						hang_up_pstn=0;
+						write(fd_pstn, &hang_up_pstn, sizeof(char));  
+					}
+					break;
 				}
 			}			
 		}

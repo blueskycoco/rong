@@ -357,18 +357,38 @@ int main(int argc,const char** argv)
 				case '1'://3g1 incomming call with phone num
 					{
 						printf("3G1 incomming call with phone num %s\r\n",(char *)(ptr+1));
-						if(process_phone((char *)(ptr+1),1)==1)
+						if(Line_on==LINE_ALL_OFF)
 						{
-							connect_audio_path(audio_path,1,2,true);
+							if(process_phone((char *)(ptr+1),1)==1)
+							{
+								connect_audio_path(audio_path,1,2,true);
+							}
+						}
+						else
+						{
+							char cmd[2];
+							cmd[0]=4;
+							cmd[1]='\0';
+							write(pipe_fd_w,cmd,sizeof(char));
 						}
 					}
 					break;
 				case '2'://pstn incomming call with phone num
 					{
 						printf("pstn incomming call with phone num %s\r\n",(char *)(ptr+1));
-						if(process_phone((char *)(ptr+1),2)==1)
+						if(Line_on==LINE_ALL_OFF)
 						{
-							connect_audio_path(audio_path,3,2,true);
+							if(process_phone((char *)(ptr+1),2)==1)
+							{
+								connect_audio_path(audio_path,3,2,true);
+							}
+						}
+						else
+						{
+							char cmd[2];
+							cmd[0]=5;
+							cmd[1]='\0';
+							write(pipe_fd_w,cmd,sizeof(char));
 						}
 					}
 					break;
