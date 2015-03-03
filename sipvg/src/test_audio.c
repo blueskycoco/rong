@@ -33,6 +33,7 @@ test_audio_file_t* test_audio_file_new(sip_voice_service_t* s,const char* filena
 	#if PLAY_FROM_FILE
 	t->player=ms_filter_new(MS_FILE_PLAYER_ID);
 	#else
+	printf("test_audio_file_new+++++++++++++++>");
 	MSSndCard *card_capture = ms_snd_card_manager_get_card(ms_snd_card_manager_get(),"ALSA: plughw:0,2");
 	if(card_capture==NULL)
 	{

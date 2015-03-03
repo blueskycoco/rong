@@ -172,8 +172,12 @@ int phone_process(int fd,int type,char *phone_number)
 	else if(type==3)//accept call in
 	{
 		printf("accept incoming call on fd %d\r\n",fd);	
-		write(fd,buff1,3);
-		write(fd,&end,1);
+		for(i=0;i<4;i++)
+		{
+			sleep(1);
+			write(fd,buff1,3);
+			write(fd,&end,1);
+		}
 	}
 	return 0;
 }

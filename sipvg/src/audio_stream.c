@@ -42,6 +42,7 @@ audio_stream_t* audio_stream_new(int loc_rtp_port, int loc_rtcp_port){
 	s->qi=ms_quality_indicator_new(s->session);
 	s->evq=ortp_ev_queue_new();
 	rtp_session_register_event_queue(s->session,s->evq);
+	printf("audio_stream_new+++++++++++++++>");
 
 	s->rtpsend=ms_filter_new(MS_RTP_SEND_ID);
 	s->rtprecv=ms_filter_new(MS_RTP_RECV_ID);

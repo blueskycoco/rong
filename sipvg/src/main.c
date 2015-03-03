@@ -66,18 +66,23 @@ void on_call_hang(sip_voice_service_t* s)
 	  recording=0;
 	  }*/
 	ms_warning("remote hang up\r\n");
-	if(ta)
+	if(Line_on==LINE_VOIP_3G2)
 	{
-		test_audio_file_stop(ta);
-		test_audio_file_destroy(ta);
-		ta=NULL;
+		if(ta)
+		{
+			test_audio_file_stop(ta);
+			test_audio_file_destroy(ta);
+			ta=NULL;
+		}
+		//terminate_call(s);
+		char cmd[2];
+		cmd[0]=0;
+		cmd[1]='\0';
+		write(pipe_fd_w,cmd,sizeof(char));
+		Line_on=LINE_ALL_OFF;
 	}
-	terminate_call(s);
-	char cmd[2];
-	cmd[0]=0;
-	cmd[1]='\0';
-	write(pipe_fd_w,cmd,sizeof(char));
-	Line_on=LINE_ALL_OFF;
+	else
+		ms_warning("nothing to do\r\n");
 }
 int process_phone(char *phone,char out)
 {
@@ -116,16 +121,17 @@ int process_phone(char *phone,char out)
 int on_call_in(sip_voice_service_t* s,char* caller)
 {
 	ms_warning("caller %s\r\b",caller);
+		accept_call(s,s->m_call);
 	if(Line_on==LINE_ALL_OFF)
 	{
 		char *ptr=strchr(caller,':');
 		if(process_phone((char *)(ptr+1),3)==1)
 		{
-			accept_call(s,s->m_call);
+			//accept_call(s,s->m_call);
 			if(ta==NULL)
 			{
 				ta=test_audio_file_new(s,NULL);
-				test_audio_file_new(s,NULL);
+				//test_audio_file_new(s,NULL);
 				test_audio_file_start(ta);
 			}
 		}
