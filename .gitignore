@@ -123,8 +123,6 @@ mediastreamer2/config.log
 mediastreamer2/mediastreamer-config.h.in~
 oRTP/autom4te.cache/
 pstn_3g_ctl
-sipvg/cn
-sipvg/pstn
 sipvg/pstn_3g_ctl
 sipvg1
 
@@ -492,7 +490,6 @@ sipvg/callbacks.o
 sipvg/channelsys.o
 sipvg/main.o
 sipvg/mschannel.o
-sipvg/sipvg
 sipvg/test_audio.o
 speex-1.2rc1/Makefile
 speex-1.2rc1/Speex.spec
